@@ -7,10 +7,9 @@ describe ClassOptions::Options, '#options' do
 
   shared_examples_for 'an option' do
     it { should respond_to(function) }       # check getter
-    it { should respond_to(function + '=') } # check setter
 
     it 'saves the option' do
-      subject.send(function + '=', value)
+      subject.send(function, value)
       expect(subject.send(function)).to be(value)
     end
 
@@ -23,7 +22,7 @@ describe ClassOptions::Options, '#options' do
     let(:testclass) do
       Class.new do
         extend ClassOptions::Options
-        options :bar
+        accept_options :bar
       end
     end
 
@@ -34,10 +33,47 @@ describe ClassOptions::Options, '#options' do
     let(:testclass) do
       Class.new do
         extend ClassOptions::Options
-        options :foo, :bar
+        accept_options :foo, :bar
       end
     end
 
     it_behaves_like 'an option'
+  end
+
+  context 'with instances' do
+    let(:testclass) do
+      Class.new do
+        extend ClassOptions::Options
+        accept_options :foo
+
+        def initialize
+          @foo = self.class.foo
+        end
+        attr_reader :foo
+      end
+    end
+
+    it "gets the value from the class" do
+      testclass.foo(23)
+      t = testclass.new
+      expect(t.foo).to be(23)
+    end
+  end
+
+  context 'with inheritance' do
+    let(:primclass) do
+      Class.new do
+        extend ClassOptions::Options
+        accept_options :foo
+      end
+    end
+    let(:testclass) do
+      Class.new(primclass) do
+      end
+    end
+    it "gets the value from the inherited class" do
+      primclass.foo(23)
+      expect(testclass.foo).to be(23)
+    end
   end
 end
